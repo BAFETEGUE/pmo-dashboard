@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PMO – KPI · Groupe Atlantique</title>
+<!-- ✅ FIX 1 : Chart.js depuis CDN autorisé par SharePoint (cdnjs) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- ✅ FIX 2 : Google Fonts SUPPRIMÉ → polices système (Segoe UI = police native SharePoint/Office) -->
+<style>
+:root{
+  --navy:#0F0B3D; --navy-l:#1A165C; --navy-m:#241E78;
+  --red:#B82809; --red-l:#E03318; --red-ll:#FF5540; --red-bg:rgba(184,40,9,0.14);
+  --green:#066115; --green-l:#0A8C1E; --green-ll:#12C42B; --green-bg:rgba(6,97,21,0.16);
+  --bg:#07062A; --s1:#0F0B3D; --s2:#160D52; --s3:#1D1268;
+  --border:rgba(255,255,255,0.08); --border2:rgba(255,255,255,0.04);
+  --text:#EDF0FB; --text2:#B8C0DD; --muted:#6E7AAD;
+  --gold:#E8A020; --blue:#3B82F6; --blue-l:#60A5FA; --purple:#7C3AED;
+  /* ✅ FIX 2 : polices système disponibles sans CDN externe */
+  --font-display: 'Segoe UI Semibold','Trebuchet MS','Arial Black',sans-serif;
+  --font-body: 'Segoe UI','Helvetica Neue',Arial,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+
+/* ✅ FIX 4 : overflow-x retiré du body pour éviter les conflits iframe */
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-size:14px;
+  min-height:100vh;
+}
+body::before{
+  content:'';position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 70% 40% at 15% 0%,rgba(184,40,9,0.09) 0%,transparent 55%),
+    radial-gradient(ellipse 50% 35% at 85% 100%,rgba(6,97,21,0.09) 0%,transparent 55%);
+  pointer-events:none;z-index:0;
+}
+.wrap{position:relative;z-index:1;}
+
+/* HEADER */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;height:62px;border-bottom:1px solid var(--border);
+  background:rgba(7,6,42,0.93);backdrop-filter:blur(16px);
+  /* ✅ FIX 3 : sticky retiré (inutile dans iframe, causait des bugs de rendu) */
+  position:relative;z-index:100;
+}
+.logo-a{display:flex;align-items:center;gap:13px;}
+.logo-b{display:flex;border-radius:9px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,0.1);}
+.logo-r{background:var(--red);padding:7px 11px;font-family:var(--font-display);font-weight:800;font-size:13px;color:#fff;letter-spacing:.5px;}
+.logo-g{background:var(--green);padding:7px 11px;font-family:var(--font-display);font-weight:800;font-size:13px;color:#fff;letter-spacing:.5px;}
+.bn{font-family:var(--font-display);font-size:15px;font-weight:700;}
+.bs{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.4px;}
+.hc{font-family:var(--font-display);font-size:11px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;}
+.hr{display:flex;align-items:center;gap:14px;}
+.live{display:flex;align-items:center;gap:7px;background:var(--green-bg);border:1px solid rgba(6,97,21,0.35);padding:5px 12px;border-radius:20px;font-size:11px;color:var(--green-ll);font-weight:500;}
+.pd{width:7px;height:7px;background:var(--green-ll);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(10,140,30,0.5);}50%{box-shadow:0 0 0 5px rgba(10,140,30,0);}}
+.cd{font-size:10px;color:var(--muted);}
+.btn-ref{background:var(--s2);border:1px solid var(--border);color:var(--text2);padding:7px 14px;border-radius:8px;cursor:pointer;font-family:var(--font-body);font-size:12px;transition:all .2s;}
+.btn-ref:hover{border-color:var(--red-l);color:var(--red-l);}
+
+/* FILTERS */
+.fb{display:flex;align-items:center;gap:10px;padding:11px 32px;border-bottom:1px solid var(--border2);background:rgba(15,11,61,0.5);flex-wrap:wrap;}
+.fl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:500;}
+select{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:6px 26px 6px 11px;border-radius:8px;font-family:var(--font-body);font-size:12px;cursor:pointer;outline:none;transition:border-color .2s;min-width:145px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236E7AAD' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;}
+select:focus{border-color:rgba(184,40,9,0.5);}
+select option{background:#0F0B3D;}
+.fc{margin-left:auto;font-size:11px;color:var(--muted);background:var(--s2);padding:4px 12px;border-radius:20px;border:1px solid var(--border);}
+
+/* MAIN */
+main{padding:24px 32px;display:flex;flex-direction:column;gap:22px;}
+.st{font-family:var(--font-display);font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:2px;display:flex;align-items:center;gap:12px;}
+.st::before{content:'';width:3px;height:13px;background:linear-gradient(to bottom,var(--red-l),var(--green-ll));border-radius:2px;}
+.st::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent);}
+
+/* KPI */
+.kg{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;}
+.kc{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:17px 19px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+.kc:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,0.35);}
+.kc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:14px 14px 0 0;}
+.k0::after{background:linear-gradient(90deg,var(--red-l),var(--navy-m));}
+.k1::after{background:var(--green-ll);}
+.k2::after{background:var(--blue-l);}
+.k3::after{background:var(--red-ll);}
+.k4::after{background:var(--gold);}
+.k5::after{background:var(--purple);}
+.ki{font-size:20px;margin-bottom:11px;display:block;}
+.kv{font-family:var(--font-display);font-size:28px;font-weight:800;line-height:1;margin-bottom:5px;}
+.k0 .kv{color:var(--red-l);}
+.k1 .kv{color:var(--green-ll);}
+.k2 .kv{color:var(--blue-l);}
+.k3 .kv{color:var(--red-ll);}
+.k4 .kv{color:var(--gold);font-size:19px;}
+.k5 .kv{color:var(--purple);}
+.kl{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.6px;}
+.ks{font-size:10px;color:var(--muted);margin-top:7px;}
+.pb{height:3px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;margin-top:9px;}
+.pf{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+
+/* CHARTS */
+.cg2{display:grid;grid-template-columns:1fr 1fr;gap:15px;}
+.cg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;}
+.cc{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:19px 21px;}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.ct{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--text);}
+.cs{font-size:10px;color:var(--muted);margin-top:3px;}
+.cw{position:relative;height:225px;}
+.cw.tall{height:285px;}
+
+/* TABLE */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{text-align:left;padding:9px 13px;color:var(--muted);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--s2);}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.03);transition:background .15s;}
+tbody tr:hover{background:rgba(255,255,255,0.025);}
+tbody td{padding:9px 13px;color:var(--text2);vertical-align:middle;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
+.badge.fi{background:rgba(6,97,21,0.2);color:#12C42B;border:1px solid rgba(6,97,21,0.3);}
+.badge.ec{background:rgba(59,130,246,0.15);color:#60A5FA;border:1px solid rgba(59,130,246,0.3);}
+.badge.rj{background:rgba(184,40,9,0.2);color:#FF5540;border:1px solid rgba(184,40,9,0.3);}
+.badge.at{background:rgba(232,160,32,0.15);color:#FBBF24;border:1px solid rgba(232,160,32,0.3);}
+.badge.df{background:rgba(110,122,173,0.15);color:var(--muted);border:1px solid var(--border);}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0;}
+.dh{background:var(--red-l);box-shadow:0 0 5px rgba(224,51,24,0.5);}
+.dm{background:var(--gold);}
+.db{background:var(--green-ll);}
+
+/* ✅ FIX 3 : LOADING OVERLAY — position:absolute au lieu de fixed (fonctionnel en iframe) */
+.lo{
+  position:absolute;inset:0;
+  background:var(--bg);
+  z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  transition:opacity .5s;
+  min-height:300px;
+}
+.lo.hide{opacity:0;pointer-events:none;}
+.ll{display:flex;}
+.ll-r{background:var(--red);padding:9px 14px;border-radius:9px 0 0 9px;font-family:var(--font-display);font-weight:800;font-size:14px;color:#fff;letter-spacing:.5px;}
+.ll-g{background:var(--green);padding:9px 14px;border-radius:0 9px 9px 0;font-family:var(--font-display);font-weight:800;font-size:14px;color:#fff;letter-spacing:.5px;}
+.sp{width:34px;height:34px;border:2px solid rgba(184,40,9,0.2);border-top-color:var(--red-l);border-right-color:var(--green-ll);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.lt{font-size:12px;color:var(--muted);letter-spacing:.5px;}
+
+/* ERROR / INFO */
+.er{background:rgba(184,40,9,0.07);border:1px solid rgba(184,40,9,0.2);border-radius:12px;padding:16px 22px;color:#fca5a5;font-size:12px;line-height:1.7;margin:14px 32px 0;}
+.er strong{display:block;margin-bottom:5px;font-size:13px;color:var(--red-l);}
+.info-bar{background:rgba(232,160,32,0.08);border:1px solid rgba(232,160,32,0.25);border-radius:10px;padding:10px 20px;margin:10px 32px 0;color:#FBBF24;font-size:11px;display:flex;align-items:center;gap:8px;}
+
+.foot{text-align:center;font-size:10px;color:var(--muted);padding:14px 0 22px;letter-spacing:.4px;display:flex;align-items:center;justify-content:center;gap:16px;}
+.foot::before,.foot::after{content:'';flex:1;height:1px;background:var(--border);max-width:200px;}
+
+@media(max-width:1200px){.kg{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:900px){
+  .cg2,.cg3{grid-template-columns:1fr;}
+  .kg{grid-template-columns:repeat(2,1fr);}
+  main{padding:16px;}
+  header{padding:0 16px;}
+  .fb{padding:10px 16px;}
+  .hc{display:none;}
+}
+@media(max-width:500px){
+  .kg{grid-template-columns:1fr 1fr;}
+  header{flex-wrap:wrap;height:auto;padding:10px 16px;gap:8px;}
+  .hr{width:100%;justify-content:flex-end;}
+}
+</style>
+</head>
+<body>
+
+<!-- ✅ FIX 3 : wrap en position:relative pour que l'overlay absolute fonctionne -->
+<div class="wrap" style="position:relative;min-height:100vh;">
+
+  <div class="lo" id="lo">
+    <div class="ll"><div class="ll-r">PMO</div><div class="ll-g">AFG</div></div>
+    <div class="sp"></div>
+    <div class="lt" id="lt">Connexion à SharePoint…</div>
+  </div>
+
+  <header>
+    <div class="logo-a">
+      <div class="logo-b"><div class="logo-r">PMO</div><div class="logo-g">AFG</div></div>
+      <div><div class="bn">Atlantic Financial Group</div><div class="bs">Suivi des Projets · Reporting KPI</div></div>
+    </div>
+    <div class="hc">Tableau de Bord · Temps Réel</div>
+    <div class="hr">
+      <div class="live"><div class="pd"></div><span>Données en direct</span><span class="cd" id="cd">· 60s</span></div>
+      <button class="btn-ref" onclick="loadData()">↻ Actualiser</button>
+    </div>
+  </header>
+
+  <div class="fb">
+    <span class="fl">Filtres</span>
+    <select id="fF" onchange="af()"><option value="">Toutes les filiales</option></select>
+    <select id="fS" onchange="af()">
+      <option value="">Tous les statuts</option>
+      <option>Finalisé</option><option>En cours</option><option>Rejeté</option><option>En attente</option>
+    </select>
+    <select id="fP" onchange="af()">
+      <option value="">Toutes priorités</option>
+      <option>Haute</option><option>Moyenne</option><option>Basse</option>
+    </select>
+    <select id="fD" onchange="af()"><option value="">Tous les départements</option></select>
+    <div class="fc" id="fc">— demandes</div>
+  </div>
+
+  <div id="ec"></div>
+
+  <main>
+    <div class="st">Vue d'ensemble</div>
+    <div class="kg">
+      <div class="kc k0"><span class="ki">📊</span><div class="kv" id="vT">—</div><div class="kl">Total Demandes</div><div class="ks" id="sT">—</div></div>
+      <div class="kc k1"><span class="ki">✅</span><div class="kv" id="vF">—</div><div class="kl">Finalisés</div><div class="pb"><div class="pf" id="bF" style="background:var(--green-ll);width:0%"></div></div><div class="ks" id="pF">—</div></div>
+      <div class="kc k2"><span class="ki">⚙️</span><div class="kv" id="vE">—</div><div class="kl">En Cours</div><div class="pb"><div class="pf" id="bE" style="background:var(--blue-l);width:0%"></div></div><div class="ks" id="pE">—</div></div>
+      <div class="kc k3"><span class="ki">❌</span><div class="kv" id="vR">—</div><div class="kl">Rejetés</div><div class="pb"><div class="pf" id="bR" style="background:var(--red-ll);width:0%"></div></div><div class="ks" id="pR">—</div></div>
+      <div class="kc k4"><span class="ki">💰</span><div class="kv" id="vB">—</div><div class="kl">Budget Total (XOF)</div><div class="ks" id="sB">—</div></div>
+      <div class="kc k5"><span class="ki">🏢</span><div class="kv" id="vFil">—</div><div class="kl">Filiales actives</div><div class="ks" id="sFil">—</div></div>
+    </div>
+
+    <div class="st">Répartitions</div>
+    <div class="cg2">
+      <div class="cc"><div class="ch"><div><div class="ct">Statut des Demandes</div><div class="cs">Distribution par statut de validation</div></div></div><div class="cw"><canvas id="cSt"></canvas></div></div>
+      <div class="cc"><div class="ch"><div><div class="ct">Volume par Filiale</div><div class="cs">Nombre de demandes déposées</div></div></div><div class="cw"><canvas id="cFi"></canvas></div></div>
+    </div>
+    <div class="cg3">
+      <div class="cc"><div class="ch"><div><div class="ct">Urgence / Priorité</div><div class="cs">Niveau de criticité des projets</div></div></div><div class="cw"><canvas id="cPr"></canvas></div></div>
+      <div class="cc"><div class="ch"><div><div class="ct">Budget par Filiale</div><div class="cs">Estimatif cumulé en XOF</div></div></div><div class="cw"><canvas id="cBu"></canvas></div></div>
+      <div class="cc"><div class="ch"><div><div class="ct">Départements demandeurs</div><div class="cs">Top unités par volume</div></div></div><div class="cw"><canvas id="cDe"></canvas></div></div>
+    </div>
+
+    <div class="st">Évolution temporelle</div>
+    <div class="cc"><div class="ch"><div><div class="ct">Soumissions par Mois</div><div class="cs">Évolution du volume sur les 12 derniers mois</div></div></div><div class="cw tall"><canvas id="cTi"></canvas></div></div>
+
+    <div class="st">Détail des Demandes</div>
+    <div class="cc">
+      <div class="ch"><div><div class="ct">Journal des Demandes</div><div class="cs" id="tSub">—</div></div></div>
+      <div class="tw">
+        <table>
+          <thead><tr><th>Projet</th><th>Filiale</th><th>Chef de Projet</th><th>Département</th><th>Priorité</th><th>Budget (XOF)</th><th>Démarrage</th><th>Statut</th><th>Soumission</th></tr></thead>
+          <tbody id="tb"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="foot">PMO · Groupe Atlantique · Données SharePoint en temps réel · Confidentiel</div>
+  </main>
+
+</div><!-- /wrap -->
+
+<script>
+// ============================================================
+// ✅ FIX 2 : URL du site SharePoint — HARDCODÉE (plus fiable)
+//
+// POURQUOI hardcodée ?
+// Le lien copié depuis SharePoint est un "lien de partage" de la forme
+// /:u:/r/sites/.../fichier.html?csf=1&web=1&e=xxx
+// Ce format empêche la détection automatique via window.location.
+// → Il faut utiliser l'URL DIRECTE dans le WebPart Incorporation :
+//   https://groupeatlantique.sharepoint.com/sites/PMO-GestiondesProjets/
+//   Documents%20partages/PMO_Dashboard_SharePoint.html
+//   (sans ?csf=1&web=1&... à la fin)
+// ============================================================
+
+const CFG = {
+  // ✅ URL fixe — fichier hébergé sur Azure, appel API cross-origin vers SharePoint
+  siteUrl: "https://groupeatlantique.sharepoint.com/sites/PMO-GestiondesProjets",
+  listName: "Demandes_Lancement_Projets",
+  refreshInterval: 60,
+  maxRows: 50,
+  fields: [
+    "Title","Filiale_Demandeuse","Nom_Projet","Departement_Demandeur",
+    "Chef_Projet","Email_Chef_Projet","Urgence_Priorite","Budget_Estimatif",
+    "Date_Demarrage_Souhaitee","Statut_Demande","Date_Soumission",
+    "Date_Livraison_Souhaitee","Objectif_Projet","Approbateur"
+  ]
+};
+
+let all = [], fil = [], charts = {}, timer = null, cv = CFG.refreshInterval;
+
+// ============================================================
+// ✅ FIX 5 : Fetch avec headers SharePoint corrects
+// credentials:"include" = envoie le cookie SharePoint de l'utilisateur connecté
+// ============================================================
+async function fetchSP() {
+  const url = `${CFG.siteUrl}/_api/web/lists/getbytitle('${encodeURIComponent(CFG.listName)}')/items`
+    + `?$select=${CFG.fields.join(",")}&$top=5000&$orderby=Date_Soumission%20desc`;
+
+  const ctrl = new AbortController();
+  const timeout = setTimeout(() => ctrl.abort(), 8000); // 8s max
+
+  try {
+    const r = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Accept": "application/json;odata=nometadata",
+        "Content-Type": "application/json;odata=nometadata"
+      },
+      credentials: "include", // ✅ Envoie le cookie de session SharePoint
+      signal: ctrl.signal
+    });
+    clearTimeout(timeout);
+
+    if (r.status === 401) throw new Error("Non autorisé (401) — Connectez-vous à SharePoint d'abord");
+    if (r.status === 403) throw new Error("Accès refusé (403) — Vérifiez les permissions sur la liste");
+    if (r.status === 404) throw new Error(`Liste "${CFG.listName}" introuvable (404) — Vérifiez le nom exact`);
+    if (!r.ok) throw new Error(`Erreur HTTP ${r.status} – ${r.statusText}`);
+
+    const d = await r.json();
+    return d.value || [];
+
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === "AbortError") throw new Error("Délai dépassé (10s) — SharePoint ne répond pas");
+    throw e;
+  }
+}
+
+// ============================================================
+// Données de démonstration (si hors SharePoint ou erreur réseau)
+// ============================================================
+function demo() {
+  const F = ["Holding","Côte d'Ivoire","Mali","Madagascar","Gabon","Cameroun","Guinée"];
+  const D = ["Organisation & Systèmes","Audit Interne","Finance","Direction Générale","IT","RH","Commercial"];
+  const S = ["Finalisé","En cours","En cours","En cours","Rejeté","En attente"];
+  const P = ["Haute","Haute","Moyenne","Moyenne","Basse"];
+  const C = ["OUATTARA Bafétégué","ADOU Wilfried","KONÉ Amadou","DIABATÉ Sara","TRAORÉ Jean"];
+  const N = ["Plateforme Open Banking","Workflow de mission","ERP Groupe","Refonte Site Web","Digitalisation RH",
+             "Audit Sécurité","CRM Commercial","Portail Fournisseurs","Système BI","Migration Cloud",
+             "App Mobile","Workflow logistique","Formation Digital","Projet de l'eau"];
+  const now = new Date();
+  return Array.from({ length: 52 }, (_, i) => {
+    const s = new Date(now - Math.random() * 200 * 86400000);
+    return {
+      Title: `DEM-${String(i + 1).padStart(3, "0")}`,
+      Nom_Projet: N[i % N.length],
+      Filiale_Demandeuse: F[~~(Math.random() * F.length)],
+      Departement_Demandeur: D[~~(Math.random() * D.length)],
+      Chef_Projet: C[~~(Math.random() * C.length)],
+      Urgence_Priorite: P[~~(Math.random() * P.length)],
+      Budget_Estimatif: ~~((Math.random() * 4000 + 100)) * 1000,
+      Date_Demarrage_Souhaitee: new Date(now.getTime() + Math.random() * 90 * 86400000).toISOString(),
+      Statut_Demande: S[~~(Math.random() * S.length)],
+      Date_Soumission: s.toISOString()
+    };
+  });
+}
+
+// ============================================================
+// Chargement principal
+// ============================================================
+async function loadData() {
+  const loEl = document.getElementById("lo");
+  const ltEl = document.getElementById("lt");
+  const ecEl = document.getElementById("ec");
+
+  loEl.classList.remove("hide");
+  ltEl.textContent = "Connexion à SharePoint…";
+  ecEl.innerHTML = "";
+  clearInterval(timer);
+
+  // ✅ FILET DE SÉCURITÉ : l'overlay se cache TOUJOURS au bout de 12s max
+  // Évite le spinner bloqué indéfiniment en cas d'erreur silencieuse
+  const safetyHide = setTimeout(() => {
+    loEl.classList.add("hide");
+    if (all.length === 0) { all = demo(); popF(); af(); }
+  }, 12000);
+
+  let isReal = false;
+  // Détecte SharePoint depuis CFG.siteUrl (plus fiable que window.location avec liens de partage)
+  const isSharePoint = CFG.siteUrl.includes('sharepoint.com') || CFG.siteUrl.includes('sharepoint.cn');
+
+  try {
+    if (!isSharePoint) throw new Error("Environnement non-SharePoint — mode démo activé");
+    ltEl.textContent = `Chargement de "${CFG.listName}"…`;
+    all = await fetchSP();
+    isReal = true;
+  } catch (e) {
+    all = demo();
+    const msg = (e.message.includes("401") || e.message.includes("403") || e.message.includes("404") || e.message.includes("HTTP"))
+      ? `<strong>⚠️ Erreur SharePoint — ${e.message}</strong>
+         Vérifiez :<br>
+         &nbsp;&nbsp;1. Le nom de liste est exactement <code>${CFG.listName}</code><br>
+         &nbsp;&nbsp;2. Vous êtes connecté à SharePoint dans ce navigateur<br>
+         &nbsp;&nbsp;3. L'URL du WebPart est l'URL <strong>directe</strong> du fichier (sans <code>?csf=1&amp;web=1</code>)<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;URL correcte : <code>${CFG.siteUrl}/Documents%20partages/PMO_Dashboard_SharePoint.html</code>`
+      : `<strong>ℹ Mode Démonstration — données fictives</strong>
+         Utilisez l'URL directe du fichier (sans <code>?csf=1&amp;web=1&amp;e=...</code>) dans le WebPart Incorporation.<br>
+         <small style="opacity:.5">${e.message}</small>`;
+    ecEl.innerHTML = `<div class="er">${msg}</div>`;
+  }
+
+  clearTimeout(safetyHide); // Annule le filet si tout s'est bien passé
+  ltEl.textContent = isReal ? "✓ Données SharePoint chargées" : "Mode démonstration actif";
+  popF();
+  af();
+  startCd();
+  setTimeout(() => loEl.classList.add("hide"), 600);
+}
+
+// ============================================================
+// Filtres
+// ============================================================
+function popF() {
+  const fs = [...new Set(all.map(i => i.Filiale_Demandeuse).filter(Boolean))].sort();
+  const ds = [...new Set(all.map(i => i.Departement_Demandeur).filter(Boolean))].sort();
+  document.getElementById("fF").innerHTML = '<option value="">Toutes les filiales</option>' + fs.map(f => `<option>${f}</option>`).join("");
+  document.getElementById("fD").innerHTML = '<option value="">Tous les départements</option>' + ds.map(d => `<option>${d}</option>`).join("");
+}
+
+function af() {
+  const f = document.getElementById("fF").value;
+  const s = document.getElementById("fS").value;
+  const p = document.getElementById("fP").value;
+  const d = document.getElementById("fD").value;
+  fil = all.filter(i =>
+    (!f || i.Filiale_Demandeuse === f) &&
+    (!s || i.Statut_Demande === s) &&
+    (!p || i.Urgence_Priorite === p) &&
+    (!d || i.Departement_Demandeur === d)
+  );
+  const n = fil.length;
+  document.getElementById("fc").textContent = `${n} demande${n > 1 ? "s" : ""} affichée${n > 1 ? "s" : ""}`;
+  kpis();
+  chartAll();
+  tbl();
+}
+
+// ============================================================
+// KPIs
+// ============================================================
+function fmt(v) {
+  if (!v || isNaN(v)) return "0";
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + " Mrd";
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + " M";
+  if (v >= 1e3) return (v / 1e3).toFixed(0) + " K";
+  return Math.round(v).toLocaleString("fr-FR");
+}
+function pct(a, b) { return b > 0 ? Math.round(a / b * 100) + "%" : "0%"; }
+
+function kpis() {
+  const it = fil, n = it.length;
+  const ok  = it.filter(i => i.Statut_Demande === "Finalisé").length;
+  const wip = it.filter(i => i.Statut_Demande === "En cours").length;
+  const rej = it.filter(i => i.Statut_Demande === "Rejeté").length;
+  const bgt = it.reduce((s, i) => s + (parseFloat(i.Budget_Estimatif) || 0), 0);
+  const fi  = new Set(it.map(i => i.Filiale_Demandeuse).filter(Boolean)).size;
+  const dp  = new Set(it.map(i => i.Departement_Demandeur).filter(Boolean)).size;
+
+  document.getElementById("vT").textContent = n;
+  document.getElementById("sT").textContent = `${all.length} au total`;
+  document.getElementById("vF").textContent = ok;
+  document.getElementById("pF").textContent = pct(ok, n);
+  document.getElementById("vE").textContent = wip;
+  document.getElementById("pE").textContent = pct(wip, n);
+  document.getElementById("vR").textContent = rej;
+  document.getElementById("pR").textContent = pct(rej, n);
+  document.getElementById("vB").textContent = fmt(bgt);
+  document.getElementById("sB").textContent = n > 0 ? `Moy: ${fmt(bgt / n)} XOF` : "—";
+  document.getElementById("vFil").textContent = fi;
+  document.getElementById("sFil").textContent = `${dp} département${dp > 1 ? "s" : ""}`;
+
+  if (n > 0) {
+    document.getElementById("bF").style.width = (ok  / n * 100) + "%";
+    document.getElementById("bE").style.width = (wip / n * 100) + "%";
+    document.getElementById("bR").style.width = (rej / n * 100) + "%";
+  }
+}
+
+// ============================================================
+// Graphiques
+// ============================================================
+const B = {
+  r:"#E03318", rl:"#FF5540", g:"#066115", gl:"#12C42B",
+  gold:"#E8A020", bl:"#60A5FA", pur:"#7C3AED", cyn:"#06B6D4", org:"#F97316"
+};
+const BARS = [B.r, B.gl, B.bl, B.gold, B.pur, B.cyn, B.org, "#60A5FA"];
+
+function ax() {
+  return {
+    grid:   { color:"rgba(255,255,255,0.045)", drawBorder:false },
+    ticks:  { color:"#6E7AAD", font:{ size:10, family:"'Segoe UI',sans-serif" } },
+    border: { display:false }
+  };
+}
+function dc(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function chartAll() { cSt(); cFi(); cPr(); cBu(); cDe(); cTi(); }
+
+function cSt() {
+  dc("cSt");
+  const m = {}, cm = {"Finalisé":B.gl,"En cours":B.bl,"Rejeté":B.rl,"En attente":B.gold,"Non défini":"#6E7AAD"};
+  fil.forEach(i => { const s = i.Statut_Demande || "Non défini"; m[s] = (m[s] || 0) + 1; });
+  const L = Object.keys(m);
+  charts["cSt"] = new Chart(document.getElementById("cSt").getContext("2d"), {
+    type:"doughnut",
+    data:{ labels:L, datasets:[{ data:Object.values(m), backgroundColor:L.map(l => cm[l] || "#6E7AAD"), borderWidth:0, hoverOffset:6 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:"70%",
+      plugins:{ legend:{ position:"right", labels:{ color:"#8892A4", font:{ size:10 }, boxWidth:8, padding:13 } },
+        tooltip:{ callbacks:{ label:c => ` ${c.label}: ${c.raw} (${pct(c.raw, fil.length)})` } } } }
+  });
+}
+
+function cFi() {
+  dc("cFi");
+  const m = {}; fil.forEach(i => { const f = i.Filiale_Demandeuse || "N/A"; m[f] = (m[f] || 0) + 1; });
+  const s = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  charts["cFi"] = new Chart(document.getElementById("cFi").getContext("2d"), {
+    type:"bar",
+    data:{ labels:s.map(x => x[0]), datasets:[{ data:s.map(x => x[1]), backgroundColor:s.map((_, i) => BARS[i % BARS.length] + "cc"), borderRadius:6, borderSkipped:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:ax(), y:{ ...ax(), beginAtZero:true, ticks:{ ...ax().ticks, stepSize:1 } } } }
+  });
+}
+
+function cPr() {
+  dc("cPr");
+  const m = {}, cm = {"Haute":B.rl,"Moyenne":B.gold,"Basse":B.gl,"N/A":"#6E7AAD"};
+  fil.forEach(i => { const p = i.Urgence_Priorite || "N/A"; m[p] = (m[p] || 0) + 1; });
+  const L = Object.keys(m);
+  charts["cPr"] = new Chart(document.getElementById("cPr").getContext("2d"), {
+    type:"pie",
+    data:{ labels:L, datasets:[{ data:Object.values(m), backgroundColor:L.map(l => cm[l] || "#6E7AAD"), borderWidth:0 }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom", labels:{ color:"#8892A4", font:{ size:10 }, boxWidth:8, padding:9 } } } }
+  });
+}
+
+function cBu() {
+  dc("cBu");
+  const m = {}; fil.forEach(i => { const f = i.Filiale_Demandeuse || "N/A"; m[f] = (m[f] || 0) + (parseFloat(i.Budget_Estimatif) || 0); });
+  const s = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  charts["cBu"] = new Chart(document.getElementById("cBu").getContext("2d"), {
+    type:"bar",
+    data:{ labels:s.map(x => x[0]), datasets:[{ data:s.map(x => x[1]), backgroundColor:B.r + "80", borderColor:B.r, borderWidth:1, borderRadius:5, borderSkipped:false }] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label:c => ` ${fmt(c.raw)} XOF` } } },
+      scales:{ x:{ ...ax(), ticks:{ ...ax().ticks, callback:v => fmt(v) } }, y:ax() } }
+  });
+}
+
+function cDe() {
+  dc("cDe");
+  const m = {}; fil.forEach(i => { const d = i.Departement_Demandeur || "N/A"; m[d] = (m[d] || 0) + 1; });
+  const s = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  charts["cDe"] = new Chart(document.getElementById("cDe").getContext("2d"), {
+    type:"bar",
+    data:{ labels:s.map(x => x[0].length > 20 ? x[0].slice(0, 18) + "…" : x[0]), datasets:[{ data:s.map(x => x[1]), backgroundColor:B.gl + "70", borderColor:B.gl, borderWidth:1, borderRadius:5, borderSkipped:false }] },
+    options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ ...ax(), beginAtZero:true, ticks:{ ...ax().ticks, stepSize:1 } }, y:ax() } }
+  });
+}
+
+function cTi() {
+  dc("cTi");
+  const mo = {};
+  fil.forEach(i => {
+    if (!i.Date_Soumission) return;
+    const d = new Date(i.Date_Soumission);
+    const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!mo[k]) mo[k] = { t:0, ok:0, wip:0, rej:0 };
+    mo[k].t++;
+    const s = i.Statut_Demande || "";
+    if (s === "Finalisé") mo[k].ok++;
+    else if (s === "En cours") mo[k].wip++;
+    else if (s === "Rejeté") mo[k].rej++;
+  });
+  const L = Object.keys(mo).sort().slice(-12);
+  const ctx = document.getElementById("cTi").getContext("2d");
+  const g = ctx.createLinearGradient(0, 0, 0, 285);
+  g.addColorStop(0, B.r + "44");
+  g.addColorStop(1, "transparent");
+  charts["cTi"] = new Chart(ctx, {
+    type:"line",
+    data:{
+      labels: L.map(l => { const [y, m] = l.split("-"); return new Date(y, m - 1, 1).toLocaleString("fr-FR", { month:"short", year:"2-digit" }); }),
+      datasets:[
+        { label:"Total",     data:L.map(l => mo[l].t),   borderColor:B.rl, backgroundColor:g,            fill:true,  tension:.4, borderWidth:2.5, pointRadius:4, pointBackgroundColor:B.rl },
+        { label:"Finalisés", data:L.map(l => mo[l].ok),  borderColor:B.gl, backgroundColor:"transparent", fill:false, tension:.4, borderWidth:1.5, borderDash:[4,3], pointRadius:3 },
+        { label:"En cours",  data:L.map(l => mo[l].wip), borderColor:B.bl, backgroundColor:"transparent", fill:false, tension:.4, borderWidth:1.5, borderDash:[4,3], pointRadius:3 },
+        { label:"Rejetés",   data:L.map(l => mo[l].rej), borderColor:B.gold, backgroundColor:"transparent", fill:false, tension:.4, borderWidth:1.5, borderDash:[4,3], pointRadius:3 }
+      ]
+    },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ labels:{ color:"#8892A4", font:{ size:10 }, boxWidth:10, padding:16 } } },
+      scales:{ x:ax(), y:{ ...ax(), beginAtZero:true, ticks:{ ...ax().ticks, stepSize:1 } } } }
+  });
+}
+
+// ============================================================
+// Tableau
+// ============================================================
+function tbl() {
+  const it = fil.slice(0, CFG.maxRows);
+  document.getElementById("tSub").textContent = `${it.length} dernière${it.length > 1 ? "s" : ""} demande${it.length > 1 ? "s" : ""} · ${fil.length} au total`;
+  document.getElementById("tb").innerHTML = it.map(i => {
+    const st = i.Statut_Demande || "";
+    const pr = (i.Urgence_Priorite || "").toLowerCase();
+    const dc = pr === "haute" ? "dh" : pr === "basse" ? "db" : "dm";
+    const bc = st === "Finalisé" ? "fi" : st === "En cours" ? "ec" : st === "Rejeté" ? "rj" : st === "En attente" ? "at" : "df";
+    const bg = i.Budget_Estimatif ? fmt(parseFloat(i.Budget_Estimatif)) + " XOF" : "—";
+    const dD = i.Date_Demarrage_Souhaitee ? new Date(i.Date_Demarrage_Souhaitee).toLocaleDateString("fr-FR") : "—";
+    const dS = i.Date_Soumission ? new Date(i.Date_Soumission).toLocaleDateString("fr-FR") : "—";
+    const ch = typeof i.Chef_Projet === "object" ? (i.Chef_Projet?.Title || "—") : (i.Chef_Projet || "—");
+    const nm = i.Nom_Projet || i.Title || "—";
+    const dp = i.Departement_Demandeur || "—";
+    return `<tr>
+      <td title="${nm}">${nm.length > 28 ? nm.slice(0, 26) + "…" : nm}</td>
+      <td>${i.Filiale_Demandeuse || "—"}</td>
+      <td title="${ch}">${ch}</td>
+      <td title="${dp}">${dp.length > 22 ? dp.slice(0, 20) + "…" : dp}</td>
+      <td><span style="display:inline-flex;align-items:center;gap:6px"><span class="dot ${dc}"></span>${i.Urgence_Priorite || "—"}</span></td>
+      <td>${bg}</td>
+      <td>${dD}</td>
+      <td><span class="badge ${bc}">${st || "—"}</span></td>
+      <td>${dS}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ============================================================
+// Compte à rebours auto-refresh
+// ============================================================
+function startCd() {
+  clearInterval(timer);
+  cv = CFG.refreshInterval;
+  timer = setInterval(() => {
+    cv--;
+    document.getElementById("cd").textContent = `· ${cv}s`;
+    if (cv <= 0) loadData();
+  }, 1000);
+}
+
+// ============================================================
+// Init
+// ============================================================
+document.addEventListener("DOMContentLoaded", () => {
+  Chart.defaults.color = "#6E7AAD";
+  loadData();
+});
+</script>
+</body>
+</html>
